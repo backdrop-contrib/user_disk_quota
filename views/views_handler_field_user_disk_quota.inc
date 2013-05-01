@@ -1,11 +1,17 @@
 <?php
+/**
+ * @file
+ * User Disk Quota Views field class.
+ */
 
+/**
+ * User disk quota field handler for Views.
+ */
 class views_handler_field_user_disk_quota  extends views_handler_field {
-  /**
-   * Override init function to provide generic option to link to user.
-   */
+
   function init(&$view, &$data) {
     parent::init($view, $data);
+    $this->additional_fields['uid'] = 'uid';
   }
 
   function option_definition() {
@@ -15,9 +21,6 @@ class views_handler_field_user_disk_quota  extends views_handler_field {
     return $options;
   }
 
-  /**
-   * Provide link to node option
-   */
   function options_form(&$form, &$form_state) {
     $form['show_default_role_limit'] = array(
       '#title' => t('Add role default value if limit not set'),
@@ -34,7 +37,7 @@ class views_handler_field_user_disk_quota  extends views_handler_field {
     parent::options_form($form, $form_state);
   }
 
-  function render($values) {  
+  function render($values) {
     $value = $this->get_value($values);
     $value = $this->sanitize_value($value);
     if (empty($value) && $this->options['show_default_role_limit']) {

@@ -1,5 +1,12 @@
 <?php
+/**
+ * @file
+ * User Disk Quota Views integration file.
+ */
 
+/**
+ * Implements hook_views_data().
+ */
 function user_disk_quota_views_data() {
   $data['user_disk_quota_user']['table']['group'] = t('User');
   $data['user_disk_quota_user']['table']['join'] = array(
@@ -16,12 +23,6 @@ function user_disk_quota_views_data() {
       'handler' => 'views_handler_field_user_disk_quota',
       'click sortable' => TRUE,
     ),
-  /*  'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_string',
-    ),*/
   );
   return $data;
 }

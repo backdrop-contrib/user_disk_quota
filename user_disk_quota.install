@@ -1,1 +1,30 @@
-<?php//TODO/** * Implements hook_schema(). */function user_disk_quota_schema() {  $schema['user_disk_quota_user'] = array(    'fields' => array(      'uid' => array(        'type' => 'int',        'not null' => TRUE,        'description' => 'The user uid.',      ),      'quota_limit' => array(        'type' => 'int',        'not null' => TRUE,        'description' => 'The user quota limit.',      ),    ),    'primary key' => array('uid'),    'indexes' => array(      'uid' => array('uid'),    ),  );  return $schema;}
+<?php
+/**
+ * @file
+ * User Disk Quota installation file.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function user_disk_quota_schema() {
+  $schema['user_disk_quota_user'] = array(
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'The user uid.',
+      ),
+      'quota_limit' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'The user quota limit.',
+      ),
+    ),
+    'primary key' => array('uid'),
+    'indexes' => array(
+      'uid' => array('uid'),
+    ),
+  );
+  return $schema;
+}

@@ -35,6 +35,9 @@ function user_disk_quota_menu() {
   return $items;
 }
 
+/**
+ * Implements hook_permissions().
+ */
 function user_disk_quota_permission() {
   $permissions = array(
     'edit own user disk quota' => array(
@@ -52,13 +55,80 @@ function user_disk_quota_permission() {
   );
   $roles = user_roles();
   foreach ($roles as $rid => $role) {
-    $permissions['edit ' . $rid .' role disk quota'] = array(
+    $permissions['edit ' . $rid . ' role disk quota'] = array(
       'title' => t('Edit role %role users disk quota', array('%role' => check_plain($role))),
     );
   }
   return $permissions;
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function user_disk_quota_form_user_profile_form_alter(&$form, &$form_state, $form_id) {
+  $form['user_disk_quota'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Disk quota'),
+    '#access' => _user_disk_quota_can_user_edit_disk_quota($form['#user']),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $quota = _user_disk_quota_get_user_user_quota($form['#user']);
+  if (!empty($quota)) {
+    $quota = format_size($quota);
+  }
+  $form['user_disk_quota']['user_disk_quota_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Quota limit'),
+    '#default_value' => $quota,
+    '#element_validate' => array('_user_disk_quota_form_quota_validate')
+  );
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function user_disk_quota_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+  $form['user_disk_quota'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Disk quota'),
+    '#access' => _user_disk_quota_can_user_create_disk_quota($form['#user']),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['user_disk_quota']['user_disk_quota_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Quota limit'),
+    '#element_validate' => array('_user_disk_quota_form_quota_validate')
+  );
+}
+
+/**
+ * Implements hook_user_insert().
+ */
+function user_disk_quota_user_insert(&$edit, $account, $category) {
+  _user_disk_quota_user_set_value($edit, $account, $category);
+}
+
+/**
+ * Implements hook_user_update().
+ */
+function user_disk_quota_user_update(&$edit, $account, $category) {
+  _user_disk_quota_user_set_value($edit, $account, $category);
+}
+
+/**
+ * Implements hook_user_delete().
+ */
+function user_disk_quota_user_delete($account) {
+  db_delete('user_disk_quota_user')
+    ->condition('uid', $account->uid)
+    ->execute();
+}
+
+/**
+ * Implements hook_views_api().
+ */
 function user_disk_quota_views_api() {
   return array(
     'api' => 3,
@@ -94,7 +164,15 @@ function user_disk_quota_field_widget_file_generic_form_alter(&$element, &$form_
 /**
  * Element process callback for file-based fields.
  *
- * @TODO
+ * @param array &$element
+ *   The form element to be processed.
+ * @param array &$form_state
+ *   The form state containing form values.
+ * @param array $form
+ *   The form element belongs to.
+ *
+ * @return array
+ *   The processed element.
  */
 function user_disk_quota_file_field_process(&$element, &$form_state, $form) {
   if (isset($element['#field_name'])) {
@@ -112,23 +190,39 @@ function user_disk_quota_file_field_process(&$element, &$form_state, $form) {
 }
 
 /**
- * TODO.
+ * Widget process callback for file-based fields.
+ *
+ * @param array &$widget
+ *   The field widget to be altered.
+ * @param array &$context
+ *   The widget context.
  */
 function _user_disk_quota_field_widget_file_form_alter(&$widget, &$context) {
   $firstkey = NULL;
   foreach (element_children($widget) as $key) {
     if (!isset($widget[$key]['#upload_validators']['file_validate_size'])) {
       $widget[$key]['#upload_validators']['file_validate_size'] = array();
-    } 
+    }
     if (!isset($widget[$key]['#upload_validators']['file_validate_size'][1])) {
-      $max_quota = _user_disk_quota_get_user_max_quota();      
+      $max_quota = _user_disk_quota_get_user_max_quota();
       if (!empty($max_quota)) {
         $widget[$key]['#upload_validators']['file_validate_size'][1] = $max_quota;
       }
-    }   
+    }
   }
 }
 
+/**
+ * Get user quota limit.
+ *
+ * If user has no specific limit, it uses user's role limit.
+ *
+ * @param object $account
+ *   The user. If NULL, current user will be used.
+ *
+ * @return int
+ *   The user quota limit, in Bytes.
+ */
 function _user_disk_quota_get_user_max_quota($account = NULL) {
   if (is_null($account)) {
     global $user;
@@ -141,6 +235,15 @@ function _user_disk_quota_get_user_max_quota($account = NULL) {
   return $max_upload_size;
 }
 
+/**
+ * Get user specific quota limit.
+ *
+ * @param object $account
+ *   The user. If NULL, current user will be used.
+ *
+ * @return int
+ *   The user quota limit, in Bytes.
+ */
 function _user_disk_quota_get_user_user_quota($account = NULL) {
   if (is_null($account)) {
     global $user;
@@ -153,6 +256,19 @@ function _user_disk_quota_get_user_user_quota($account = NULL) {
   return $max_upload_size;
 }
 
+/**
+ * Get user's role quota limit.
+ *
+ * @param object $account
+ *   The user. If NULL, current user will be used.
+ * @param bool $parsed
+ *   If TRUE, the return value will be formatted in human readable way.
+ *   Otherwise the return value will be expressed in Byte.
+ *
+ * @return string|int
+ *   The user's role quota limit, as a Bytes number (i.e. 4194304) or as a
+ *   human readable string (i.e. '4 MB').
+ */
 function _user_disk_quota_get_user_role_max_quota($account = NULL, $parsed = TRUE) {
   if (is_null($account)) {
     global $user;
@@ -174,6 +290,15 @@ function _user_disk_quota_get_user_role_max_quota($account = NULL, $parsed = TRU
   return parse_size($max_upload_size);
 }
 
+/**
+ * Get user current uploaded files quota.
+ *
+ * @param object $account
+ *   The user. If NULL, current user will be used.
+ *
+ * @return int
+ *   The user current uploaded files quota, in Bytes.
+ */
 function _user_disk_quota_get_user_disk_quota($account = NULL) {
   if (is_null($account)) {
     global $user;
@@ -182,49 +307,21 @@ function _user_disk_quota_get_user_disk_quota($account = NULL) {
   return file_space_used($account->uid);
 }
 
-function user_disk_quota_form_user_profile_form_alter(&$form, &$form_state, $form_id) {
-  $form['user_disk_quota'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Disk quota'),
-    '#access' => _user_disk_quota_can_user_edit_disk_quota($form['#user']),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
-  $quota = _user_disk_quota_get_user_user_quota($form['#user']);
-  if (!empty($quota)) {
-    $quota = format_size($quota);
-  }
-  $form['user_disk_quota']['user_disk_quota_limit'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Quota limit'),
-    '#default_value' => $quota,
-    '#element_validate' => array('_user_disk_quota_form_quota_validate')
-  );
-}
-
-function user_disk_quota_form_user_register_form_alter(&$form, &$form_state, $form_id) {
-  $form['user_disk_quota'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Disk quota'),
-    '#access' => _user_disk_quota_can_user_create_disk_quota($form['#user']),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
-  $form['user_disk_quota']['user_disk_quota_limit'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Quota limit'),
-    '#element_validate' => array('_user_disk_quota_form_quota_validate')
-  );
-}
-
-function user_disk_quota_user_insert(&$edit, $account, $category) {
-  _user_disk_quota_user_set_value($edit, $account, $category);
-}
-
-function user_disk_quota_user_update(&$edit, $account, $category) {
-  _user_disk_quota_user_set_value($edit, $account, $category);
-}
-
+/**
+ * Set user quota limit.
+ *
+ * Callback for hook_user_insert() and hook_user_update().
+ *
+ * @param array &$edit
+ *   The array of form values submitted by the user.
+ * @param object $account
+ *   The user object on which the operation is performed.
+ * @param bool $category
+ *   The active category of user information being edited.
+ *
+ * @see hook_user_insert()
+ * @see hook_user_update()
+ */
 function _user_disk_quota_user_set_value(&$edit, $account, $category) {
   if (!$account || $account->uid==0) {
     return;
@@ -242,12 +339,15 @@ function _user_disk_quota_user_set_value(&$edit, $account, $category) {
   }
 }
 
-function user_disk_quota_user_delete($account) {
-  db_delete('user_disk_quota_user')
-    ->condition('uid', $account->uid)
-    ->execute();
-}
-
+/**
+ * Check if current user can edit a user quota.
+ *
+ * @param object $account
+ *   The user to be edited by current user.
+ *
+ * @return bool
+ *   TRUE if user can edit, FALSE otherwise.
+ */
 function _user_disk_quota_can_user_edit_disk_quota($account) {
   global $user;
   if (user_access('edit any user disk quota') ||
@@ -256,7 +356,7 @@ function _user_disk_quota_can_user_edit_disk_quota($account) {
   }
   if ($account->roles) {
     foreach ($account->roles as $rid => $role) {
-      if (user_access('edit ' . $rid .' role disk quota')) {
+      if (user_access('edit ' . $rid . ' role disk quota')) {
         return TRUE;
       }
     }
@@ -264,6 +364,14 @@ function _user_disk_quota_can_user_edit_disk_quota($account) {
   return FALSE;
 }
 
+/**
+ * Set user quota limit.
+ *
+ * @param int $uid
+ *   The id of users to set limit for.
+ * @param int $quota
+ *   The limit to be set.
+ */
 function _user_disk_quota_set_user_quota($uid, $quota) {
   $query = db_select('user_disk_quota_user', 'u')
     ->fields('u')
@@ -285,14 +393,35 @@ function _user_disk_quota_set_user_quota($uid, $quota) {
   }
 }
 
-function _user_disk_quota_can_user_create_disk_quota($account) {
-  global $user;
-  if (user_access('create user disk quota')) {
+/**
+ * Check if current user can add a user quota to a new user.
+ *
+ * @param object $account
+ *   The user that is trying to add a user quota. If null, current user will be
+ *   used.
+ *
+ * @return bool
+ *   TRUE if user can add user quota, FALSE otherwise.
+ */
+function _user_disk_quota_can_user_create_disk_quota($account = NULL) {
+  if (is_null($account)) {
+    global $user;
+    $account = $user;
+  }
+  if (user_access('create user disk quota', $account)) {
     return TRUE;
   }
   return FALSE;
 }
 
+/**
+ * Form element validation callback for fields containing a quota.
+ *
+ * @param array &$element
+ *   The form element to be processed.
+ * @param array &$form_state
+ *   The form state containing form values.
+ */
 function _user_disk_quota_form_quota_validate($element, &$form_state) {
   if (empty($element['#value'])) {
     // Empty means no size restrictions, so don't throw an error.
