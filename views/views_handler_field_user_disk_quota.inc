@@ -7,13 +7,19 @@
 /**
  * User disk quota field handler for Views.
  */
-class views_handler_field_user_disk_quota  extends views_handler_field {
+class views_handler_field_user_disk_quota extends views_handler_field {
 
+  /**
+   * Add user id to field initialization.
+   */
   function init(&$view, &$data) {
     parent::init($view, $data);
     $this->additional_fields['uid'] = 'uid';
   }
 
+  /**
+   * Define field options.
+   */
   function option_definition() {
     $options = parent::option_definition();
     $options['show_default_role_limit'] = array('default' => TRUE, 'bool' => TRUE);
@@ -21,6 +27,9 @@ class views_handler_field_user_disk_quota  extends views_handler_field {
     return $options;
   }
 
+  /**
+   * Define field options form.
+   */
   function options_form(&$form, &$form_state) {
     $form['show_default_role_limit'] = array(
       '#title' => t('Add role default value if limit not set'),
@@ -37,6 +46,9 @@ class views_handler_field_user_disk_quota  extends views_handler_field {
     parent::options_form($form, $form_state);
   }
 
+  /**
+   * Render field.
+   */
   function render($values) {
     $value = $this->get_value($values);
     $value = $this->sanitize_value($value);

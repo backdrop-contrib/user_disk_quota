@@ -2,7 +2,7 @@
 
 /**
  * @file
- * User Disk Quota: @todo.
+ * User Disk Quota: limit user uploads total size to a specific disk space quota.
  *
  */
 
