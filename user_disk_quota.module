@@ -433,15 +433,4 @@ function _user_disk_quota_form_quota_validate($element, &$form_state) {
     $err_message .= ' ' . t('You can either leave the text field empty or enter a string like "512" (bytes), "80 KB" (kilobytes) or "50 MB" (megabytes).');
     form_error($element, $err_message);
   }
-  $max_upload_size = file_upload_max_size();
-  if ($max_size > $max_upload_size) {
-    $max_upload_size_formatted = format_size($max_upload_size);
-    $err_message = t('The !field option cannot contain a value bigger than system upload max file size (current limit <strong>%limit</strong>).',
-      array(
-        '!field' => filter_xss($element['#title'], array('em')),
-        '%limit' => $max_upload_size_formatted,
-      )
-    );
-    form_error($element, $err_message);
-  }
 }

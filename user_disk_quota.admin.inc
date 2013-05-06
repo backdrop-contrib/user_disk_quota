@@ -14,11 +14,22 @@
 function user_disk_quota_role_form() {
   $roles = user_roles();
   $form = array();
+  $description = array();
+  $description[] = t('Specify the user quota limit that applies to each role.');
+  $description[] = t("Enter a value like @es1, @es2 or @es3 in order to restrict a user role's disk space quota.",
+      array(
+        '@es1' => '"512" (bytes)',
+        '@es2' => '"80 KB" (kilobytes)',
+        '@es3' => '"50 MB" (megabytes)',
+      )
+    );
+  $description[] = t('Leave the field empty to not set any limit.');  
   $form['roles'] = array(
     '#type' => 'fieldset',
     '#collapsed' => FALSE,
     '#collapsible' => FALSE,
     '#title' => t('Roles'),
+    '#description' => implode(' ', $description),
   );
   foreach ($roles as $rid => $role) {
     $default = variable_get('user_disk_quota_role_' . $rid, '');
@@ -27,7 +38,7 @@ function user_disk_quota_role_form() {
     }
     $form['roles']['user_disk_quota_role_' . $rid] = array(
       '#type' => 'textfield',
-      '#title' => check_plain($role),
+      '#title' => t("@role's disk quota limit", array('@role' => check_plain($role))),
       '#default_value' => $default,
       '#element_validate' => array('_user_disk_quota_form_quota_validate'),
     );
