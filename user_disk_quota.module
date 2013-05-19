@@ -143,6 +143,9 @@ function user_disk_quota_element_info_alter(&$type) {
   if (isset($type['managed_file'])) {
     $type['managed_file']['#process'][] = 'user_disk_quota_file_field_process';
   }
+  if (isset($type['plupload'])) {
+    $type['plupload']['#process'][] = 'user_disk_quota_file_field_process';
+  }
 }
 
 /**
@@ -175,18 +178,34 @@ function user_disk_quota_field_widget_file_generic_form_alter(&$element, &$form_
  *   The processed element.
  */
 function user_disk_quota_file_field_process(&$element, &$form_state, $form) {
-  if (isset($element['#field_name'])) {
-    if (!isset($element['#upload_validators']['file_validate_size'])) {
-      $element['#upload_validators']['file_validate_size'] = array();
-    }
-    if (!isset($element['#upload_validators']['file_validate_size'][1])) {
-      $max_quota = _user_disk_quota_get_user_max_quota();
-      if (!empty($max_quota)) {
-        $element['#upload_validators']['file_validate_size'][1] = $max_quota;
-      }
+  if (!isset($element['#upload_validators']['user_disk_quota_file_validate_size'])) {
+    $element['#upload_validators']['user_disk_quota_file_validate_size'] = array();
+  }
+  if (!isset($element['#upload_validators']['user_disk_quota_file_validate_size'][0])) {
+    $max_quota = _user_disk_quota_get_user_max_quota();
+    if (!empty($max_quota)) {
+      $element['#upload_validators']['user_disk_quota_file_validate_size'][0] = $max_quota;
     }
   }
+  watchdog('DEBUG_ALB', 'HW2_@debug', array('@debug'=>print_r($element,TRUE)));
   return $element;
+}
+
+function user_disk_quota_file_validate_size(stdClass $file, $user_limit = 0) {
+  global $user;
+  $errors = array();
+  // Bypass validation for uid  = 1.
+  if ($user->uid != 1) {
+    // Save a query by only calling file_space_used() when a limit is provided.
+    if ($user_limit && (_user_disk_quota_get_user_disk_quota($user) + $file->filesize) > $user_limit) {
+      $errors[] = t('The file is %filesize which would exceed your disk quota of %quota.', array('%filesize' => format_size($file->filesize), '%quota' => format_size($user_limit)));
+    }
+  }
+  watchdog('DEBUG_ALB', 'HW3a_@debug', array('@debug'=>print_r($user_limit,TRUE)));
+  watchdog('DEBUG_ALB', 'HW3b_@debug', array('@debug'=>print_r(_user_disk_quota_get_user_disk_quota($user),TRUE)));
+  watchdog('DEBUG_ALB', 'HW3c_@debug', array('@debug'=>print_r($file->filesize,TRUE)));
+  watchdog('DEBUG_ALB', 'HW3d_@debug', array('@debug'=>print_r($errors,TRUE)));
+  return $errors;
 }
 
 /**
@@ -280,7 +299,7 @@ function _user_disk_quota_get_user_role_max_quota($account = NULL, $parsed = TRU
     if (!$max_upload_size) {
       $max_upload_size = $upload_size;
     }
-    elseif (parse_size($max_upload_size)<parse_size($upload_size)) {
+    elseif (parse_size($max_upload_size) < parse_size($upload_size)) {
       $max_upload_size = $upload_size;
     }
   }
@@ -304,7 +323,20 @@ function _user_disk_quota_get_user_disk_quota($account = NULL) {
     global $user;
     $account = $user;
   }
-  return file_space_used($account->uid);
+  return user_disk_quota_file_space_used($account->uid);
+  //return file_space_used($account->uid, 0);
+}
+
+function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
+  $query = db_select('file_managed', 'f');
+  if ($status != 'all'){ 
+    $query->condition('f.status', $status);
+  }
+  $query->addExpression('SUM(f.filesize)', 'filesize');
+  if (isset($uid)) {
+    $query->condition('f.uid', $uid);
+  }
+  return $query->execute()->fetchField();
 }
 
 /**
