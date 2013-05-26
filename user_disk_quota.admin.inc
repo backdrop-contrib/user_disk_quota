@@ -43,11 +43,50 @@ function user_disk_quota_role_form() {
       '#element_validate' => array('_user_disk_quota_form_quota_validate'),
     );
   }
+  $form['default'] = array(
+    '#type' => 'fieldset',
+    '#collapsed' => FALSE,
+    '#collapsible' => TRUE,
+    '#title' => t('Default values'),
+    '#description' => '',
+  );
+  $default_percentage = variable_get('user_disk_quota_warning_percentage', 100);
+  $form['default']['user_disk_quota_warning_percentage'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Percentage'),
+    '#right' => '%',
+    '#default_value' => $default_percentage,
+    '#description' => t('Set the default percentage of user disk quota to be filled up before a warning appear to the user.'),
+    '#size' => 3,
+    '#required' => TRUE,
+    '#field_suffix' => '<div class="user-disk-percentage-slider-range-max"></div>'
+  );
+  $form['default']['user_disk_quota_warning_percentage']['#attributes']['class'][] = 'user-disk-percentage-slider';
+  drupal_add_library('system','ui');
+  drupal_add_library('system','ui.slider');
+  $settings = array(
+    'user_disk_quota_admin' => array(
+      'default_percentage' => $default_percentage,
+    ),
+  );
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'user_disk_quota') . '/js/user_disk_quota-admin.js' => array(
+      'type' => 'file',
+    ),
+  );
+  $form['#attached']['js'][] = array(
+    'data' => $settings,
+    'type' => 'setting',
+  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
   );
   return $form;
+}
+
+function user_disk_quota_role_form_validate($form, &$form_state) {
+  //TODO
 }
 
 /**
@@ -70,4 +109,5 @@ function user_disk_quota_role_form_submit($form, &$form_state) {
       variable_set($key, $value);
     }
   }
+  variable_set('user_disk_quota_warning_percentage', $values['user_disk_quota_warning_percentage']);
 }

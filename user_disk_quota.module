@@ -187,7 +187,7 @@ function user_disk_quota_file_field_process(&$element, &$form_state, $form) {
       $element['#upload_validators']['user_disk_quota_file_validate_size'][0] = $max_quota;
     }
   }
-  watchdog('DEBUG_ALB', 'HW2_@debug', array('@debug'=>print_r($element,TRUE)));
+  _user_disk_quota_get_user_disk_quota_warning();
   return $element;
 }
 
@@ -201,10 +201,6 @@ function user_disk_quota_file_validate_size(stdClass $file, $user_limit = 0) {
       $errors[] = t('The file is %filesize which would exceed your disk quota of %quota.', array('%filesize' => format_size($file->filesize), '%quota' => format_size($user_limit)));
     }
   }
-  watchdog('DEBUG_ALB', 'HW3a_@debug', array('@debug'=>print_r($user_limit,TRUE)));
-  watchdog('DEBUG_ALB', 'HW3b_@debug', array('@debug'=>print_r(_user_disk_quota_get_user_disk_quota($user),TRUE)));
-  watchdog('DEBUG_ALB', 'HW3c_@debug', array('@debug'=>print_r($file->filesize,TRUE)));
-  watchdog('DEBUG_ALB', 'HW3d_@debug', array('@debug'=>print_r($errors,TRUE)));
   return $errors;
 }
 
@@ -325,6 +321,33 @@ function _user_disk_quota_get_user_disk_quota($account = NULL) {
   }
   return user_disk_quota_file_space_used($account->uid);
   //return file_space_used($account->uid, 0);
+}
+
+function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
+  static $displayed;
+  if ($displayed) {
+    return;
+  }
+  $quota = _user_disk_quota_get_user_disk_quota($account);
+  $max = _user_disk_quota_get_user_max_quota($account);
+  $percent = variable_get('user_disk_quota_percentage', '100');
+  $warning = ($max/100)*$percent;
+  if ($quota >= $max) {
+    drupal_set_message(t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)', 
+      array(
+        '@quota' => format_size($quota),
+        '@max' => format_size($max),
+      )), 'error');
+    $displayed = TRUE;
+  }
+  else if ($quota > $warning) {
+    drupal_set_message(t('Your current disk usage has almost exceeded allowed max quota size (currently used @quota of @max)', 
+      array(
+        '@quota' => format_size($quota),
+        '@max' => format_size($max),
+      )), 'warning');
+    $displayed = TRUE;
+  }
 }
 
 function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
