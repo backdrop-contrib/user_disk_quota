@@ -53,13 +53,13 @@ function user_disk_quota_role_form() {
   $default_percentage = variable_get('user_disk_quota_warning_percentage', 100);
   $form['default']['user_disk_quota_warning_percentage'] = array(
     '#type' => 'textfield',
-    '#title' => t('Percentage'),
-    '#right' => '%',
+    '#title' => t('Warning message'),
     '#default_value' => $default_percentage,
     '#description' => t('Set the default percentage of user disk quota to be filled up before a warning appear to the user.'),
     '#size' => 3,
+    '#maxlength' => 3,
     '#required' => TRUE,
-    '#field_suffix' => '<div class="user-disk-percentage-slider-range-max"></div>'
+    '#field_suffix' => '%<div class="user-disk-percentage-slider-range-max"></div>'
   );
   $form['default']['user_disk_quota_warning_percentage']['#attributes']['class'][] = 'user-disk-percentage-slider';
   drupal_add_library('system','ui');
@@ -86,7 +86,16 @@ function user_disk_quota_role_form() {
 }
 
 function user_disk_quota_role_form_validate($form, &$form_state) {
-  //TODO
+  $value = $form_state['values']['user_disk_quota_warning_percentage'];
+  $title = $form['default']['user_disk_quota_warning_percentage']['#title'];
+  if (!is_numeric($value) || !is_int($value)) {
+    form_set_error('user_disk_quota_warning_percentage',
+      t('The %field value must be a numeric integer.', array('%field'=>check_plain($title))));
+  }
+  if ($value<0 || $value>100) {
+    form_set_error('user_disk_quota_warning_percentage',
+      t('The allowed %field value must be in a range between 0 and 100.', array('%field'=>check_plain($title))));
+  }
 }
 
 /**
