@@ -40,6 +40,9 @@ function user_disk_quota_menu() {
  */
 function user_disk_quota_permission() {
   $permissions = array(
+    'view own user disk quota' => array(
+      'title' => t('View own user disk quota'),
+    ),
     'edit own user disk quota' => array(
       'title' => t('Edit own user disk quota'),
     ),
@@ -127,12 +130,40 @@ function user_disk_quota_user_delete($account) {
 }
 
 /**
+ * Implements hook_user_delete().
+ */
+function user_disk_quota_user_view($account, $view_mode, $langcode) {
+  global $user;
+  if (user_access('edit any user disk quota') ||
+    ($user->uid == $account->uid && user_access('view own user disk quota', $account))) {
+    $account->content['summary']['user_disk_quota'] =  array(
+      '#type' => 'user_profile_item',
+      '#title' => t('User disk quota'),
+      '#markup' => theme('user_disk_quota', array('account' => $account)),
+      '#attributes' => array('class' => array('user-disk-quota')),
+    );
+  }
+}
+
+/**
  * Implements hook_views_api().
  */
 function user_disk_quota_views_api() {
   return array(
     'api' => 3,
     'path' => drupal_get_path('module', 'user_disk_quota') . '/views',
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function user_disk_quota_theme(){
+  return array(
+    'user_disk_quota' => array(
+      'variables' => array('account' => NULL),
+      'file' => 'user_disk_quota.theme.inc',
+    ),
   );
 }
 
