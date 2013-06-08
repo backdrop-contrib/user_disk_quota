@@ -1,6 +1,11 @@
 <?php
 
-function theme_user_disk_quota($variables){
+/**
+ * @file
+ * Theme functions for User Disk Quota module.
+ */
+
+function theme_user_disk_quota($variables) {
   $account = $variables['account'];
   $output = t('You used %used disk space of your %quota quota.',
     array(

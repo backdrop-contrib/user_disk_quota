@@ -1,3 +1,8 @@
+/**
+ * @file
+ * User Disk Quota javascript functions for module administration pages.
+ */
+
 (function($) {
   Drupal.behaviors.user_disk_quota_admin = {
     attach: function (context, settings) {

@@ -62,8 +62,8 @@ function user_disk_quota_role_form() {
     '#field_suffix' => '%<div class="user-disk-percentage-slider-range-max"></div>'
   );
   $form['default']['user_disk_quota_warning_percentage']['#attributes']['class'][] = 'user-disk-percentage-slider';
-  drupal_add_library('system','ui');
-  drupal_add_library('system','ui.slider');
+  drupal_add_library('system', 'ui');
+  drupal_add_library('system', 'ui.slider');
   $settings = array(
     'user_disk_quota_admin' => array(
       'default_percentage' => $default_percentage,
@@ -85,16 +85,27 @@ function user_disk_quota_role_form() {
   return $form;
 }
 
+/**
+ * Module settings form validate callback.
+ *
+ * @return array $form
+ *   The settings form.
+ * @param array &$form_state
+ *   The form state containing form values.
+ */
 function user_disk_quota_role_form_validate($form, &$form_state) {
   $value = $form_state['values']['user_disk_quota_warning_percentage'];
   $title = $form['default']['user_disk_quota_warning_percentage']['#title'];
-  if (!is_numeric($value) || !is_int($value)) {
+  if (!empty($value)) {
+    $value = trim($value);
+  }
+  if (!is_numeric($value) || intval($value)==0) {
     form_set_error('user_disk_quota_warning_percentage',
-      t('The %field value must be a numeric integer.', array('%field'=>check_plain($title))));
+      t('The %field value must be a numeric integer.', array('%field' => check_plain($title))));
   }
   if ($value<0 || $value>100) {
     form_set_error('user_disk_quota_warning_percentage',
-      t('The allowed %field value must be in a range between 0 and 100.', array('%field'=>check_plain($title))));
+      t('The allowed %field value must be in a range between 0 and 100.', array('%field' => check_plain($title))));
   }
 }
 
@@ -119,4 +130,5 @@ function user_disk_quota_role_form_submit($form, &$form_state) {
     }
   }
   variable_set('user_disk_quota_warning_percentage', $values['user_disk_quota_warning_percentage']);
+  drupal_set_message(t('Disk quota settings have been updated.'), 'status');
 }
