@@ -429,6 +429,7 @@ function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
   if (isset($uid)) {
     $query->condition('f.uid', $uid);
   }
+  $query->addTag('user_disk_quota_get_user_quota');
   return $query->execute()->fetchField();
 }
 
