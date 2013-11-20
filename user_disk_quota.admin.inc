@@ -50,7 +50,7 @@ function user_disk_quota_role_form() {
     '#title' => t('Default values'),
     '#description' => '',
   );
-  $default_percentage = variable_get('user_disk_quota_warning_percentage', 100);
+  $default_percentage = variable_get('user_disk_quota_warning_percentage', 70);
   $form['default']['user_disk_quota_warning_percentage'] = array(
     '#type' => 'textfield',
     '#title' => t('Warning message'),

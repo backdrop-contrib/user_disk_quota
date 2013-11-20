@@ -35,6 +35,7 @@ function user_disk_quota_schema() {
 function user_disk_quota_uninstall() {
   $roles = user_roles();
   foreach ($roles as $rid => $role) {
-    variable_del('user_disk_quota_role_' . $rid, '');
+    variable_del('user_disk_quota_role_' . $rid);
   }
+  variable_del('user_disk_quota_warning_percentage');
 }
