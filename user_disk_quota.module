@@ -168,6 +168,23 @@ function user_disk_quota_theme() {
 }
 
 /**
+ * Implements hook_file_validate().
+ */
+function user_disk_quota_file_validate($file){
+  global $user;
+  $errors = array();
+  // Bypass validation for uid  = 1.
+  if ($user->uid != 1) {
+    $quota = _user_disk_quota_get_user_disk_quota($user);
+    $max = _user_disk_quota_get_user_max_quota($user);
+    if ($file->filesize + $quota > $max) {
+      $errors[] = t('The file is %filesize which would exceed your disk quota of %quota.', array('%filesize' => format_size($file->filesize), '%quota' => format_size($max)));
+    }
+  }
+  return $errors;
+}
+
+/**
  * Implements hook_element_info_alter().
  */
 function user_disk_quota_element_info_alter(&$type) {
