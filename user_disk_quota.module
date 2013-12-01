@@ -378,12 +378,9 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
   if ($displayed) {
     return;
   }
-  $max = _user_disk_quota_get_user_max_quota($account);
-  if (empty($max)) {
-    return;
-  }
   $quota = _user_disk_quota_get_user_disk_quota($account);
-  $percent = variable_get('user_disk_quota_warning_percentage', '100');
+  $max = _user_disk_quota_get_user_max_quota($account);
+  $percent = variable_get('user_disk_quota_percentage', '100');
   $warning = ($max/100)*$percent;
   if ($quota >= $max) {
     drupal_set_message(t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)', 
@@ -429,7 +426,6 @@ function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
   if (isset($uid)) {
     $query->condition('f.uid', $uid);
   }
-  $query->addTag('user_disk_quota_get_user_quota');
   return $query->execute()->fetchField();
 }
 
