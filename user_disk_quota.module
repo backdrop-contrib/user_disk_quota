@@ -170,7 +170,7 @@ function user_disk_quota_theme() {
 /**
  * Implements hook_file_validate().
  */
-function user_disk_quota_file_validate($file){
+function user_disk_quota_file_validate($file) {
   global $user;
   $errors = array();
   // Bypass validation for uid  = 1.
