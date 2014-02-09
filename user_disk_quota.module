@@ -177,7 +177,7 @@ function user_disk_quota_file_validate($file) {
   if ($user->uid != 1) {
     $quota = _user_disk_quota_get_user_disk_quota($user);
     $max = _user_disk_quota_get_user_max_quota($user);
-    if ($file->filesize + $quota > $max) {
+    if ($max && $file->filesize + $quota > $max) {
       $errors[] = t('The file is %filesize which would exceed your disk quota of %quota.', array('%filesize' => format_size($file->filesize), '%quota' => format_size($max)));
     }
   }
