@@ -19,6 +19,7 @@ function user_disk_quota_schema() {
         'type' => 'int',
         'not null' => TRUE,
         'description' => 'The user quota limit.',
+        'size' => 'big',
       ),
     ),
     'primary key' => array('uid'),
@@ -38,4 +39,16 @@ function user_disk_quota_uninstall() {
     variable_del('user_disk_quota_role_' . $rid);
   }
   variable_del('user_disk_quota_warning_percentage');
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Updates 'quota_limit' field size.
+ */
+function user_disk_quota_update_7101() {
+  $schema = user_disk_quota_schema();
+  $spec = $schema['user_disk_quota_user']['fields']['quota_limit'];
+  db_change_field('user_disk_quota_user', 'quota_limit', 'quota_limit', $spec);
+  return st('%module module updated.', array('%module' => 'User Disk Quota'));
 }
