@@ -177,7 +177,14 @@ function user_disk_quota_file_validate($file) {
   if ($user->uid != 1) {
     $quota = _user_disk_quota_get_user_disk_quota($user);
     $max = _user_disk_quota_get_user_max_quota($user);
-    if ($max && $file->filesize + $quota > $max) {
+    if ($quota >= $max) {
+        $errors[] = t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)',
+              array(
+                  '@quota' => format_size($quota),
+                  '@max' => format_size($max),
+              ));
+    }
+    else if ($max && $file->filesize + $quota > $max) {
       $errors[] = t('The file is %filesize which would exceed your disk quota of %quota.', array('%filesize' => format_size($file->filesize), '%quota' => format_size($max)));
     }
   }
@@ -197,22 +204,6 @@ function user_disk_quota_element_info_alter(&$type) {
 }
 
 /**
- * Implements hook_field_widget_WIDGET_TYPE_form_alter().
- */
-function user_disk_quota_field_widget_image_image_form_alter(&$widget, $context) {
-  // Altering 'image_image' widget.
-  _user_disk_quota_field_widget_file_form_alter($widget, $context);
-}
-
-/**
- * Implements hook_field_widget_WIDGET_TYPE_form_alter().
- */
-function user_disk_quota_field_widget_file_generic_form_alter(&$element, &$form_state, $context) {
-  // Altering 'file_generic' widget.
-  _user_disk_quota_field_widget_file_form_alter($element, $form_state);
-}
-
-/**
  * Element process callback for file-based fields.
  *
  * @param array &$element
@@ -226,66 +217,13 @@ function user_disk_quota_field_widget_file_generic_form_alter(&$element, &$form_
  *   The processed element.
  */
 function user_disk_quota_file_field_process(&$element, &$form_state, $form) {
-  if (!isset($element['#upload_validators']['user_disk_quota_file_validate_size'])) {
-    $element['#upload_validators']['user_disk_quota_file_validate_size'] = array();
-  }
-  if (!isset($element['#upload_validators']['user_disk_quota_file_validate_size'][0])) {
-    $max_quota = _user_disk_quota_get_user_max_quota();
-    if (!empty($max_quota)) {
-      $element['#upload_validators']['user_disk_quota_file_validate_size'][0] = $max_quota;
-    }
-  }
-  _user_disk_quota_get_user_disk_quota_warning();
-  return $element;
-}
 
-/**
- * Validate a file against current user disk quota.
- *
- * @param object $file
- *   The file element to be validated.
- * @param int $user_limit
- *   The form state containing form values.
- *
- * @return array
- *   The array of file validation errors.
- */
-function user_disk_quota_file_validate_size(stdClass $file, $user_limit = 0) {
-  global $user;
-  $errors = array();
-  // Bypass validation for uid  = 1.
-  if ($user->uid != 1) {
-    // Save a query by only calling file_space_used() when a limit is provided.
-    if ($user_limit && (_user_disk_quota_get_user_disk_quota($user) + $file->filesize) > $user_limit) {
-      $errors[] = t('The file is %filesize which would exceed your disk quota of %quota.', array('%filesize' => format_size($file->filesize), '%quota' => format_size($user_limit)));
+    // If the upload forms haven't been submitted show quota warning status
+    if(!isset($element['#needs_validation']) && !isset($form_state['clicked_button'])){
+        _user_disk_quota_get_user_disk_quota_warning();
     }
-  }
-  return $errors;
+    return $element;
 }
-
-/**
- * Widget process callback for file-based fields.
- *
- * @param array &$widget
- *   The field widget to be altered.
- * @param array &$context
- *   The widget context.
- */
-function _user_disk_quota_field_widget_file_form_alter(&$widget, &$context) {
-  $firstkey = NULL;
-  foreach (element_children($widget) as $key) {
-    if (!isset($widget[$key]['#upload_validators']['file_validate_size'])) {
-      $widget[$key]['#upload_validators']['file_validate_size'] = array();
-    }
-    if (!isset($widget[$key]['#upload_validators']['file_validate_size'][1])) {
-      $max_quota = _user_disk_quota_get_user_max_quota();
-      if (!empty($max_quota)) {
-        $widget[$key]['#upload_validators']['file_validate_size'][1] = $max_quota;
-      }
-    }
-  }
-}
-
 /**
  * Get user quota limit.
  *
