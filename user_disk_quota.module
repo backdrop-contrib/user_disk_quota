@@ -177,7 +177,7 @@ function user_disk_quota_file_validate($file) {
   if ($user->uid != 1) {
     $quota = _user_disk_quota_get_user_disk_quota($user);
     $max = _user_disk_quota_get_user_max_quota($user);
-    if ($quota >= $max) {
+    if ($max && $quota >= $max) {
         $errors[] = t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)',
               array(
                   '@quota' => format_size($quota),
