@@ -515,3 +515,41 @@ function _user_disk_quota_form_quota_validate($element, &$form_state) {
     form_error($element, $err_message);
   }
 }
+
+/**
+ * Implements hook_query_alter();
+ */
+function user_disk_quota_query_alter(QueryAlterableInterface $query){
+
+  if ($query->hasTag('user_disk_quota_get_user_quota')) {
+
+    // Gets the file types to be counted as quota
+    $types = variable_get('user_disk_quota_file_types');
+    $or = db_or();
+    $set = false;
+
+    // Construt the select to the files table based on the file types
+    if($types['images'] === 'images'){
+      $or->condition('filemime','image%','LIKE');
+      $set = true;
+    }
+    if($types['videos'] === 'videos'){
+      $or->condition('filemime','video%','LIKE');
+      $set = true;
+    }
+
+    // Documents are considered any file type that is not video or image.
+    if($types['documents'] === 'documents'){
+      $and = db_and();
+      $and->condition('filemime','video%','NOT LIKE');
+      $and->condition('filemime','image%','NOT LIKE');
+      $or->condition($and);
+      $set = true;
+    }
+
+    // Alter the query only if there is any file type set.
+    if($set){
+      $query->condition($or);
+    }
+  }
+}

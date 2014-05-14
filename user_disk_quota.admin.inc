@@ -43,6 +43,17 @@ function user_disk_quota_role_form() {
       '#element_validate' => array('_user_disk_quota_form_quota_validate'),
     );
   }
+  $form['roles']['user_disk_quota_file_types'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('The file types to be considered in the quotas'),
+    '#options' => array(
+      'images' => t('Images'),
+      'videos' => t('Videos'),
+      'documents' => t('Documents')
+    ),
+    '#default_value' => variable_get('user_disk_quota_file_types',array()),
+
+  );
   $form['default'] = array(
     '#type' => 'fieldset',
     '#collapsed' => FALSE,
@@ -129,6 +140,7 @@ function user_disk_quota_role_form_submit($form, &$form_state) {
       variable_set($key, $value);
     }
   }
+  variable_set('user_disk_quota_file_types', $values['user_disk_quota_file_types']);
   variable_set('user_disk_quota_warning_percentage', $values['user_disk_quota_warning_percentage']);
   drupal_set_message(t('Disk quota settings have been updated.'), 'status');
 }
