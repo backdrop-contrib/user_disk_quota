@@ -24,5 +24,14 @@ function user_disk_quota_views_data() {
       'click sortable' => TRUE,
     ),
   );
+
+  $data['user_disk_quota_user']['quota_used'] = array(
+    'title' => t('User disk quota usage'),
+    'help' => t('User disk quota usage'),
+    'field' => array(
+      'handler' => 'views_handler_field_user_disk_usage',
+      'click sortable' => TRUE,
+    ),
+  );
   return $data;
 }
