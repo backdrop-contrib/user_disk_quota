@@ -376,6 +376,7 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
  *   The user current uploaded files quota, in Bytes.
  */
 function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
+
   $query = db_select('file_managed', 'f');
   if ($status != 'all') { 
     $query->condition('f.status', $status);
@@ -385,7 +386,12 @@ function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
     $query->condition('f.uid', $uid);
   }
   $query->addTag('user_disk_quota_get_user_quota');
-  return $query->execute()->fetchField();
+  $space_used = $query->execute()->fetchField();
+  if(!isset($space_used)){
+
+    $space_used = 0;
+  }
+  return $space_used;
 }
 
 /**
