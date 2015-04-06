@@ -173,8 +173,8 @@ function user_disk_quota_theme() {
 function user_disk_quota_file_validate($file) {
   global $user;
   $errors = array();
-  // Bypass validation for uid  = 1.
-  if ($user->uid != 1) {
+  // Bypass validation for uid  = 1 and for files not counting for quota.
+  if ($user->uid != 1 && _user_disk_quota_is_file_tracked($file)) {
     $quota = _user_disk_quota_get_user_disk_quota($user);
     $max = _user_disk_quota_get_user_max_quota($user);
     if ($max && $quota >= $max) {
@@ -377,6 +377,9 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
  */
 function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
 
+  // Get setting for quota by type.
+  $quota_by_type = variable_get('user_disk_quota_quota_by_type');
+
   $query = db_select('file_managed', 'f');
   if ($status != 'all') { 
     $query->condition('f.status', $status);
@@ -385,6 +388,28 @@ function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
   if (isset($uid)) {
     $query->condition('f.uid', $uid);
   }
+
+  if($quota_by_type){
+    $types = variable_get('user_disk_quota_file_types');
+    $or = db_or();
+    // Construt the select to the files table based on the file types
+    if($types['images'] === 'images'){
+      $or->condition('filemime','image%','LIKE');
+    }
+    if($types['videos'] === 'videos'){
+      $or->condition('filemime','video%','LIKE');
+    }
+    // Documents are considered any file type that is not video or image.
+    if($types['documents'] === 'documents'){
+      $and = db_and();
+      $and->condition('filemime','video%','NOT LIKE');
+      $and->condition('filemime','image%','NOT LIKE');
+      $or->condition($and);
+    }
+    // Filter the query with the quota by type.
+    $query->condition($or);
+  }
+
   $query->addTag('user_disk_quota_get_user_quota');
   $space_used = $query->execute()->fetchField();
   if(!isset($space_used)){
@@ -523,39 +548,34 @@ function _user_disk_quota_form_quota_validate($element, &$form_state) {
 }
 
 /**
- * Implements hook_query_alter();
+ * Function that returns the generic mime type based on the file mimetype.
+ * @param $file The file object
+ * @return string The generic mime type of the file: images, videos or documents.
  */
-function user_disk_quota_query_alter(QueryAlterableInterface $query){
+function _user_disk_quota_is_file_tracked($file){
 
-  if ($query->hasTag('user_disk_quota_get_user_quota')) {
+  $mimetype = $file->filemime;
+  $quota_file_types = variable_get('user_disk_quota_file_types');
 
-    // Gets the file types to be counted as quota
-    $types = variable_get('user_disk_quota_file_types');
-    $or = db_or();
-    $set = false;
+  // First we check if quota by type is active.
+  if(variable_get('user_disk_quota_quota_by_type')){
 
-    // Construt the select to the files table based on the file types
-    if($types['images'] === 'images'){
-      $or->condition('filemime','image%','LIKE');
-      $set = true;
+    // If the current file is an image check if it is being tracked.
+    if(substr($mimetype,0,5) == 'image'){
+      $is_tracked = ($quota_file_types['images'] !== 0);
     }
-    if($types['videos'] === 'videos'){
-      $or->condition('filemime','video%','LIKE');
-      $set = true;
+    // If the current file is a video check if it is being tracked.
+    else if(substr($mimetype,0,5) == 'video'){
+      $is_tracked = ($quota_file_types['videos'] !== 0);
     }
-
-    // Documents are considered any file type that is not video or image.
-    if($types['documents'] === 'documents'){
-      $and = db_and();
-      $and->condition('filemime','video%','NOT LIKE');
-      $and->condition('filemime','image%','NOT LIKE');
-      $or->condition($and);
-      $set = true;
+    // If the current file is a document check if it is being tracked.
+    else{
+      $is_tracked = ($quota_file_types['documents'] !== 0);
     }
-
-    // Alter the query only if there is any file type set.
-    if($set){
-      $query->condition($or);
-    }
+    return $is_tracked;
+  }
+  // If quota by type is not active all files count to the quota.
+  else{
+    return true;
   }
 }

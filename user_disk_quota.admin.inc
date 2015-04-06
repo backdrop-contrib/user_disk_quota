@@ -43,16 +43,23 @@ function user_disk_quota_role_form() {
       '#element_validate' => array('_user_disk_quota_form_quota_validate'),
     );
   }
-  $form['roles']['user_disk_quota_file_types'] = array(
+  $form['quota_by_type'] = array(
+    '#type' => 'fieldset',
+    '#collapsed' => FALSE,
+    '#collapsible' => FALSE,
+    '#title' => t('Quota by File Type'),
+    '#description' => "The file types to be considered in the quotas.",
+  );
+  $form['quota_by_type']['user_disk_quota_file_types'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('The file types to be considered in the quotas'),
+    '#title' => t('Quota by file type'),
+    '#description' => t("If no file type is chosen, 'Quota by file type' will be disabled and all file types will count for the disk quota."),
     '#options' => array(
       'images' => t('Images'),
       'videos' => t('Videos'),
       'documents' => t('Documents')
     ),
     '#default_value' => variable_get('user_disk_quota_file_types',array()),
-
   );
   $form['default'] = array(
     '#type' => 'fieldset',
@@ -131,6 +138,8 @@ function user_disk_quota_role_form_validate($form, &$form_state) {
 function user_disk_quota_role_form_submit($form, &$form_state) {
   $values = $form_state['values'];
   $strlenght = strlen('user_disk_quota_role_');
+  $quota_by_type = false;
+
   foreach ($values as $key => $value) {
     if (substr($key, 0, $strlenght) == 'user_disk_quota_role_') {
       $value = parse_size(check_plain($value));
@@ -140,6 +149,14 @@ function user_disk_quota_role_form_submit($form, &$form_state) {
       variable_set($key, $value);
     }
   }
+  // If no types are specified quota by type is inactive
+  foreach($values['user_disk_quota_file_types'] as $type){
+    if($type !== 0){
+      $quota_by_type = true;
+    }
+  }
+  //Set a variable that specifies if tracking quota by type is active.
+  variable_set('user_disk_quota_quota_by_type', $quota_by_type);
   variable_set('user_disk_quota_file_types', $values['user_disk_quota_file_types']);
   variable_set('user_disk_quota_warning_percentage', $values['user_disk_quota_warning_percentage']);
   drupal_set_message(t('Disk quota settings have been updated.'), 'status');

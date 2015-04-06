@@ -39,6 +39,8 @@ function user_disk_quota_uninstall() {
     variable_del('user_disk_quota_role_' . $rid);
   }
   variable_del('user_disk_quota_warning_percentage');
+  variable_del('user_disk_quota_quota_by_type');
+  variable_del('user_disk_quota_file_types');
 }
 
 /**
