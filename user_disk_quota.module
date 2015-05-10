@@ -130,14 +130,14 @@ function user_disk_quota_user_delete($account) {
 }
 
 /**
- * Implements hook_user_delete().
+ * Implements hook_user_view()).
  */
 function user_disk_quota_user_view($account, $view_mode, $langcode) {
   global $user;
   if (user_access('edit any user disk quota') ||
     ($user->uid == $account->uid && user_access('view own user disk quota', $account))) {
-    $account->content['summary']['user_disk_quota'] =  array(
-      '#type' => 'user_profile_item',
+    $account->content['user_disk_quota'] =  array(
+      '#type' => 'item',
       '#title' => t('User disk quota'),
       '#markup' => theme('user_disk_quota', array('account' => $account)),
       '#attributes' => array('class' => array('user-disk-quota')),
