@@ -1,0 +1,13 @@
+{
+    "_config_name": "user_disk_quota.settings",
+    "user_disk_quota_role_anonymous": "",
+    "user_disk_quota_role_authenticated": "",
+    "user_disk_quota_role_administrator": "",
+    "user_disk_quota_quota_by_type": false,
+    "user_disk_quota_file_types": {
+        "images": 0,
+        "videos": 0,
+        "documents": 0
+    },
+    "user_disk_quota_warning_percentage": "70"
+}
