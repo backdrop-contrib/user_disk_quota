@@ -21,7 +21,7 @@ FEATURES
 
 Each user could be limited on the total size of uploadable files.
 The limit could also be set per user role. The uploaded file by user, by design,
-works only for file uploaded using a Drupal form.
+works only for file uploaded using a Backdrop form.
 FTP uploaded size could not be counted on disk quota total size.
 
 SUPPORTED MODULES

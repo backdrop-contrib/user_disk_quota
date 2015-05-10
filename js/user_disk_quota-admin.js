@@ -4,7 +4,7 @@
  */
 
 (function($) {
-  Drupal.behaviors.user_disk_quota_admin = {
+  Backdrop.behaviors.user_disk_quota_admin = {
     attach: function (context, settings) {
       $( ".user-disk-percentage-slider-range-max" ).slider({
         range: "max",

@@ -81,15 +81,15 @@ function user_disk_quota_role_form() {
     '#field_suffix' => '%<div class="user-disk-percentage-slider-range-max"></div>'
   );
   $form['default']['user_disk_quota_warning_percentage']['#attributes']['class'][] = 'user-disk-percentage-slider';
-  drupal_add_library('system', 'ui');
-  drupal_add_library('system', 'ui.slider');
+  backdrop_add_library('system', 'ui');
+  backdrop_add_library('system', 'ui.slider');
   $settings = array(
     'user_disk_quota_admin' => array(
       'default_percentage' => $default_percentage,
     ),
   );
   $form['#attached']['js'] = array(
-    drupal_get_path('module', 'user_disk_quota') . '/js/user_disk_quota-admin.js' => array(
+    backdrop_get_path('module', 'user_disk_quota') . '/js/user_disk_quota-admin.js' => array(
       'type' => 'file',
     ),
   );
@@ -161,5 +161,5 @@ function user_disk_quota_role_form_submit($form, &$form_state) {
   $config->set('user_disk_quota_quota_by_type', $quota_by_type);
   $config->set('user_disk_quota_file_types', $values['user_disk_quota_file_types']);
   $config->set('user_disk_quota_warning_percentage', $values['user_disk_quota_warning_percentage']);
-  drupal_set_message(t('Disk quota settings have been updated.'), 'status');
+  backdrop_set_message(t('Disk quota settings have been updated.'), 'status');
 }
