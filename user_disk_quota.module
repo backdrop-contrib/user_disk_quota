@@ -578,3 +578,14 @@ function _user_disk_quota_is_file_tracked($file){
     return true;
   }
 }
+
+/**
+* Implements hook_config_info().
+*/
+function user_disk_quota_config_info() {
+  $prefixes['user_disk_quota.settings'] = array(
+    'label' => t('User Disk Quota settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
