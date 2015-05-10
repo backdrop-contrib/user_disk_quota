@@ -287,7 +287,7 @@ function _user_disk_quota_get_user_role_max_quota($account = NULL, $parsed = TRU
     $account = $user;
   }
   $max_upload_size = '';
-  $config = config('user_disk_quota');
+  $config = config('user_disk_quota.settings');
   foreach ($account->roles as $rid => $role) {
     $upload_size = $config->get('user_disk_quota_role_' . $rid, '');
     if (!$max_upload_size) {
@@ -339,7 +339,7 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
     return;
   }
   $quota = _user_disk_quota_get_user_disk_quota($account);
-  $config = config('user_disk_quota');
+  $config = config('user_disk_quota.settings');
   $percent = $config->get('user_disk_quota_warning_percentage', '100');
   $warning = ($max/100)*$percent;
   if ($quota >= $max) {
@@ -378,7 +378,7 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
  *   The user current uploaded files quota, in Bytes.
  */
 function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
-  $config = config('user_disk_quota');
+  $config = config('user_disk_quota.settings');
 
   // Get setting for quota by type.
   $quota_by_type = $config->get('user_disk_quota_quota_by_type');
@@ -552,7 +552,7 @@ function _user_disk_quota_form_quota_validate($element, &$form_state) {
  * @return string The generic mime type of the file: images, videos or documents.
  */
 function _user_disk_quota_is_file_tracked($file){
-  $config = config('user_disk_quota');
+  $config = config('user_disk_quota.settings');
   $mimetype = $file->filemime;
   $quota_file_types = $config->get('user_disk_quota_file_types');
 

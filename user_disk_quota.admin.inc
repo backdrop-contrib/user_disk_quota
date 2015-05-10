@@ -12,7 +12,7 @@
  *   The settings form.
  */
 function user_disk_quota_role_form() {
-  $config = config('user_disk_quota');
+  $config = config('user_disk_quota.settings');
   $roles = user_roles();
   $form = array();
   $description = array();
@@ -137,7 +137,7 @@ function user_disk_quota_role_form_validate($form, &$form_state) {
  *   The form state containing form values.
  */
 function user_disk_quota_role_form_submit($form, &$form_state) {
-  $config = config('user_disk_quota');
+  $config = config('user_disk_quota.settings');
   $values = $form_state['values'];
   $strlenght = strlen('user_disk_quota_role_');
   $quota_by_type = false;
@@ -161,5 +161,6 @@ function user_disk_quota_role_form_submit($form, &$form_state) {
   $config->set('user_disk_quota_quota_by_type', $quota_by_type);
   $config->set('user_disk_quota_file_types', $values['user_disk_quota_file_types']);
   $config->set('user_disk_quota_warning_percentage', $values['user_disk_quota_warning_percentage']);
+  $config->save();
   backdrop_set_message(t('Disk quota settings have been updated.'), 'status');
 }
