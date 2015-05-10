@@ -287,8 +287,9 @@ function _user_disk_quota_get_user_role_max_quota($account = NULL, $parsed = TRU
     $account = $user;
   }
   $max_upload_size = '';
+  $config = config('user_disk_quota');
   foreach ($account->roles as $rid => $role) {
-    $upload_size = variable_get('user_disk_quota_role_' . $rid, '');
+    $upload_size = $config->get('user_disk_quota_role_' . $rid, '');
     if (!$max_upload_size) {
       $max_upload_size = $upload_size;
     }
@@ -338,7 +339,8 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
     return;
   }
   $quota = _user_disk_quota_get_user_disk_quota($account);
-  $percent = variable_get('user_disk_quota_warning_percentage', '100');
+  $config = config('user_disk_quota');
+  $percent = $config->get('user_disk_quota_warning_percentage', '100');
   $warning = ($max/100)*$percent;
   if ($quota >= $max) {
     backdrop_set_message(t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)',
@@ -376,9 +378,10 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
  *   The user current uploaded files quota, in Bytes.
  */
 function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
+  $config = config('user_disk_quota');
 
   // Get setting for quota by type.
-  $quota_by_type = variable_get('user_disk_quota_quota_by_type');
+  $quota_by_type = $config->get('user_disk_quota_quota_by_type');
 
   $query = db_select('file_managed', 'f');
   if ($status != 'all') {
@@ -390,7 +393,7 @@ function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
   }
 
   if($quota_by_type){
-    $types = variable_get('user_disk_quota_file_types');
+    $types = $config->get('user_disk_quota_file_types');
     $or = db_or();
     // Construt the select to the files table based on the file types
     if($types['images'] === 'images'){
@@ -549,12 +552,12 @@ function _user_disk_quota_form_quota_validate($element, &$form_state) {
  * @return string The generic mime type of the file: images, videos or documents.
  */
 function _user_disk_quota_is_file_tracked($file){
-
+  $config = config('user_disk_quota');
   $mimetype = $file->filemime;
-  $quota_file_types = variable_get('user_disk_quota_file_types');
+  $quota_file_types = $config->get('user_disk_quota_file_types');
 
   // First we check if quota by type is active.
-  if(variable_get('user_disk_quota_quota_by_type')){
+  if($config->get('user_disk_quota_quota_by_type')){
 
     // If the current file is an image check if it is being tracked.
     if(substr($mimetype,0,5) == 'image'){

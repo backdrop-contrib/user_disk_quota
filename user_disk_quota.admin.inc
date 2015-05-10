@@ -12,6 +12,7 @@
  *   The settings form.
  */
 function user_disk_quota_role_form() {
+  $config = config('user_disk_quota');
   $roles = user_roles();
   $form = array();
   $description = array();
@@ -23,7 +24,7 @@ function user_disk_quota_role_form() {
         '@es3' => '"50 MB" (megabytes)',
       )
     );
-  $description[] = t('Leave the field empty to not set any limit.');  
+  $description[] = t('Leave the field empty to not set any limit.');
   $form['roles'] = array(
     '#type' => 'fieldset',
     '#collapsed' => FALSE,
@@ -32,7 +33,7 @@ function user_disk_quota_role_form() {
     '#description' => implode(' ', $description),
   );
   foreach ($roles as $rid => $role) {
-    $default = variable_get('user_disk_quota_role_' . $rid, '');
+    $default = $config->get('user_disk_quota_role_' . $rid, '');
     if (!empty($default)) {
       $default = format_size($default);
     }
@@ -59,7 +60,7 @@ function user_disk_quota_role_form() {
       'videos' => t('Videos'),
       'documents' => t('Documents')
     ),
-    '#default_value' => variable_get('user_disk_quota_file_types',array()),
+    '#default_value' => $config->get('user_disk_quota_file_types',array()),
   );
   $form['default'] = array(
     '#type' => 'fieldset',
@@ -68,7 +69,7 @@ function user_disk_quota_role_form() {
     '#title' => t('Default values'),
     '#description' => '',
   );
-  $default_percentage = variable_get('user_disk_quota_warning_percentage', 70);
+  $default_percentage = $config->get('user_disk_quota_warning_percentage', 70);
   $form['default']['user_disk_quota_warning_percentage'] = array(
     '#type' => 'textfield',
     '#title' => t('Warning message'),
@@ -136,6 +137,7 @@ function user_disk_quota_role_form_validate($form, &$form_state) {
  *   The form state containing form values.
  */
 function user_disk_quota_role_form_submit($form, &$form_state) {
+  $config = config('user_disk_quota');
   $values = $form_state['values'];
   $strlenght = strlen('user_disk_quota_role_');
   $quota_by_type = false;
@@ -146,7 +148,7 @@ function user_disk_quota_role_form_submit($form, &$form_state) {
       if ($value == 0) {
         $value = '';
       }
-      variable_set($key, $value);
+      $config->set($key, $value);
     }
   }
   // If no types are specified quota by type is inactive
@@ -156,8 +158,8 @@ function user_disk_quota_role_form_submit($form, &$form_state) {
     }
   }
   //Set a variable that specifies if tracking quota by type is active.
-  variable_set('user_disk_quota_quota_by_type', $quota_by_type);
-  variable_set('user_disk_quota_file_types', $values['user_disk_quota_file_types']);
-  variable_set('user_disk_quota_warning_percentage', $values['user_disk_quota_warning_percentage']);
+  $config->set('user_disk_quota_quota_by_type', $quota_by_type);
+  $config->set('user_disk_quota_file_types', $values['user_disk_quota_file_types']);
+  $config->set('user_disk_quota_warning_percentage', $values['user_disk_quota_warning_percentage']);
   drupal_set_message(t('Disk quota settings have been updated.'), 'status');
 }
