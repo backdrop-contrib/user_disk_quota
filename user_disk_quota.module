@@ -23,7 +23,7 @@ function user_disk_quota_help($path, $arg) {
 function user_disk_quota_menu() {
   $items = array();
   $items['admin/people/disk-quota'] = array(
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('user_disk_quota_role_form'),
     'title' => 'Disk Quota',
     'description' => 'Find and manage roles disk quota.',
@@ -109,15 +109,15 @@ function user_disk_quota_form_user_register_form_alter(&$form, &$form_state, $fo
 /**
  * Implements hook_user_insert().
  */
-function user_disk_quota_user_insert(&$edit, $account, $category) {
-  _user_disk_quota_user_set_value($edit, $account, $category);
+function user_disk_quota_user_insert($account) {
+  _user_disk_quota_user_set_value($account);
 }
 
 /**
  * Implements hook_user_update().
  */
-function user_disk_quota_user_update(&$edit, $account, $category) {
-  _user_disk_quota_user_set_value($edit, $account, $category);
+function user_disk_quota_user_update($account) {
+  _user_disk_quota_user_set_value($account);
 }
 
 /**
@@ -151,7 +151,7 @@ function user_disk_quota_user_view($account, $view_mode, $langcode) {
 function user_disk_quota_views_api() {
   return array(
     'api' => 3,
-    'path' => drupal_get_path('module', 'user_disk_quota') . '/views',
+    'path' => backdrop_get_path('module', 'user_disk_quota') . '/views',
   );
 }
 
@@ -341,7 +341,7 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
   $percent = variable_get('user_disk_quota_warning_percentage', '100');
   $warning = ($max/100)*$percent;
   if ($quota >= $max) {
-    drupal_set_message(t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)', 
+    drupal_set_message(t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)',
       array(
         '@quota' => format_size($quota),
         '@max' => format_size($max),
@@ -349,7 +349,7 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
     $displayed = TRUE;
   }
   elseif ($quota > $warning) {
-    drupal_set_message(t('Your current disk usage has almost exceeded allowed max quota size (currently used @quota of @max)', 
+    drupal_set_message(t('Your current disk usage has almost exceeded allowed max quota size (currently used @quota of @max)',
       array(
         '@quota' => format_size($quota),
         '@max' => format_size($max),
@@ -381,7 +381,7 @@ function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
   $quota_by_type = variable_get('user_disk_quota_quota_by_type');
 
   $query = db_select('file_managed', 'f');
-  if ($status != 'all') { 
+  if ($status != 'all') {
     $query->condition('f.status', $status);
   }
   $query->addExpression('SUM(f.filesize)', 'filesize');
@@ -424,23 +424,19 @@ function user_disk_quota_file_space_used($uid = NULL, $status = 'all') {
  *
  * Callback for hook_user_insert() and hook_user_update().
  *
- * @param array &$edit
- *   The array of form values submitted by the user.
  * @param object $account
  *   The user object on which the operation is performed.
- * @param bool $category
- *   The active category of user information being edited.
  *
  * @see hook_user_insert()
  * @see hook_user_update()
  */
-function _user_disk_quota_user_set_value(&$edit, $account, $category) {
+function _user_disk_quota_user_set_value($account) {
   if (!$account || $account->uid==0) {
     return;
   }
-  if (isset($edit['user_disk_quota_limit'])) {
-    if (!empty($edit['user_disk_quota_limit'])) {
-      $quota = parse_size(check_plain($edit['user_disk_quota_limit']));
+  if (isset($account->user_disk_quota_limit)) {
+    if (!empty($account->user_disk_quota_limit)) {
+      $quota = parse_size(check_plain($account->user_disk_quota_limit));
       _user_disk_quota_set_user_quota($account->uid, $quota);
     }
     else {
