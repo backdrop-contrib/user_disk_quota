@@ -341,7 +341,7 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
   $percent = variable_get('user_disk_quota_warning_percentage', '100');
   $warning = ($max/100)*$percent;
   if ($quota >= $max) {
-    drupal_set_message(t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)',
+    backdrop_set_message(t('Your current disk usage has exceeded allowed max quota size (currently used @quota of @max)',
       array(
         '@quota' => format_size($quota),
         '@max' => format_size($max),
@@ -349,7 +349,7 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
     $displayed = TRUE;
   }
   elseif ($quota > $warning) {
-    drupal_set_message(t('Your current disk usage has almost exceeded allowed max quota size (currently used @quota of @max)',
+    backdrop_set_message(t('Your current disk usage has almost exceeded allowed max quota size (currently used @quota of @max)',
       array(
         '@quota' => format_size($quota),
         '@max' => format_size($max),
@@ -369,7 +369,7 @@ function _user_disk_quota_get_user_disk_quota_warning($account = NULL) {
  *   Allowed status:
  *    - 'all': temporary and permanent file will be included in result.
  *    - 0: only temporary files will be included. Temporary files older than
- *         DRUPAL_MAXIMUM_TEMP_FILE_AGE will be removed during cron runs.
+ *         BACKDROP_MAXIMUM_TEMP_FILE_AGE will be removed during cron runs.
  *    - 1: only permanent files will be included in result.
  *
  * @return int
